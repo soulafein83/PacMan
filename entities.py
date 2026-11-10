@@ -82,3 +82,37 @@ class Pacman:
             self.x, self.y = nx, ny
         # else: blocked — we sit exactly on a tile corner here, so the
         # player can steer at the next frame.
+
+
+PELLET_SCORE = 10
+
+
+class Game:
+    """One round of the game: pacman + pellet field + score.
+
+    Pure logic — no pyxel. The pyxel layer (main.py) owns the
+    session-high score across rounds.
+    """
+
+    def __init__(self):
+        self.pacman = Pacman()
+        self.pellets = set(maze.pellets())  # {(col, row), ...}
+        # spawn tile has no pellet (like the original): no free points
+        self.pellets.discard((START_X // TILE, START_Y // TILE))
+        self.score = 0
+
+    def _current_tile(self):
+        return (self.pacman.x // TILE, self.pacman.y // TILE)
+
+    def update(self, desired=None):
+        """Advance one frame; eats the pellet on pacman's tile."""
+        self.pacman.update(desired)
+        tile = self._current_tile()
+        if tile in self.pellets:
+            self.pellets.discard(tile)
+            self.score += PELLET_SCORE
+
+    def maze_empty(self):
+        """True when every pellet is gone (level-advance condition;
+        the advance mechanic itself lands in step 6)."""
+        return not self.pellets

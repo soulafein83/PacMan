@@ -113,3 +113,56 @@ def test_cannot_leave_the_maze_from_the_top():
     assert p.dir == entities.UP
     run(p, 4)
     assert p.y == 4  # stopped at the top wall of row 1 (tile (1,0) is #)
+
+
+def G(col, row=None):
+    """A fresh Game with pacman placed at the corner of tile (col, row)
+    (row defaults to the spawn row 11)."""
+    g = entities.Game()
+    y = entities.START_Y if row is None else row * maze.TILE_SIZE
+    g.pacman = entities.Pacman(col * maze.TILE_SIZE, y)
+    return g
+
+
+def test_game_starts_with_every_pellet_from_the_map():
+    g = entities.Game()
+    expected = {(c, r) for r in range(maze.MAZE_HEIGHT)
+                for c in range(maze.MAZE_WIDTH)
+                if maze.tile_at(c, r) in (".", "o")}
+    expected.discard((entities.START_X // entities.TILE,
+                      entities.START_Y // entities.TILE))  # no spawn pellet
+    assert g.pellets == expected
+    assert g.score == 0
+    assert g.maze_empty() is False
+
+
+def test_sitting_on_a_pellet_eats_it():
+    g = G(1, 1)  # tile (1,1) is "."
+    g.update()
+    assert (1, 1) not in g.pellets
+    assert g.score == entities.PELLET_SCORE
+
+
+def test_power_pellet_is_eaten_and_scores():
+    g = G(1, 4)  # tile (1,4) is "o"
+    g.update()
+    assert (1, 4) not in g.pellets
+    assert g.score == entities.PELLET_SCORE
+
+
+def test_walking_eats_a_trail_of_pellets():
+    g = G(13, 11)  # spawn corner, row 11 cols 14-16 are "." (13 has none)
+    g.pacman.update("right")
+    for _ in range(8):
+        g.update()
+    assert (14, 11) not in g.pellets
+    assert (15, 11) not in g.pellets
+    assert (16, 11) in g.pellets  # not reached yet
+    assert g.score == 2 * entities.PELLET_SCORE
+
+
+def test_maze_empty_condition():
+    g = entities.Game()
+    assert g.maze_empty() is False
+    g.pellets.clear()
+    assert g.maze_empty() is True

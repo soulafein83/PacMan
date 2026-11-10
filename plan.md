@@ -61,17 +61,28 @@ power-peletki, 3 życia, rosnąca trudność.
 - [x] Poprawka mapy: power-peletki spójne (4× `o`), 8× `O` → `.`
       (poprzednio `O` było nieprzejściwalne — ściana w rogach)
 
-### 3. Peletki + score + HUD
+### 3. Peletki + score + HUD — DONE ✅
 
-- [ ] Pożeranie pelet: `pellets` jako zbiór (col,row); pacman zjada
-      peletkę swojego kafelka
-- [ ] Score: +10 za peletę, HUD na górze (SCORE, HIGH SCORE) — font
-      Pyxel 8×8, HUD powyżej labiryntu (OY=20 daje miejsce)
-- [ ] High score trwany w sesji (plik na później, opcjonalnie)
-- [ ] Warunek: labirynt pusty → przejście do kolejnego poziomu
-      (mechanika w kroku 6)
-- [ ] Testy: zjedzenie peletki redukuje zbiór, score rośnie, licznik
-      pelet się zgadza z mapą
+- [x] Klasa `Game` w `entities.py`: `pellets` jako zbiór (col,row),
+      `score`, `maze_empty()`; zjadanie peletki kafelka pod pacmanem
+      (+10 pkt). Kafelek spawnu (13,11) bez peletki (jak w oryginale —
+      brak darmowych punktów na starcie)
+- [x] Score: +10 za peletę, HUD na górze (SCORE, HIGH SCORE) — font
+      Pyxel 8×8, dwie linijki (etykiety y=2, wartości y=10) powyżej
+      labiryntu (OY=20)
+- [x] High score trwały w sesji (moduł `main`, przez menu ↔ gra;
+      plik na później, opcjonalnie)
+- [x] Warunek: labirynt pusty → `maze_empty()` (mechanika przejścia
+      w kroku 6)
+- [x] Render: `draw_maze` rysuje tylko peletki ze zbioru `game.pellets`
+- [x] Testy: 5 nowych w `test_entities.py` (zbiór zgodny z mapą,
+      zjadanie na miejscu / power / w ruchu, `maze_empty`) +
+      4 nowych w `test_main.py` (HUD score/high, score rośnie w HUD,
+      brak rysowania zjedzonych pelet) + 2 poprawione (stan gry w
+      `main.game`)
+- [x] Smoke test headless na prawdziwym pyxel: `smoke_test.py`
+      (120 klatek; `pyxel.quit()` wychodzi bez flush stdout — dlatego
+      print z flush przed quit)
 
 ### 4. Dom duchów + wypuszczanie + AI
 

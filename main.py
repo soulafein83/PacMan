@@ -1,7 +1,8 @@
 """Pac-Man in Pyxel.
 
-Step 1: skeleton — pyxel init, static maze rendered from the text map,
-title screen. No entities yet (player/ghosts arrive in later steps).
+Step 3: pellets + score + HUD. Pacman eats pellets (10 pts each),
+the HUD shows SCORE and the session-high HIGH SCORE. Emptying the
+maze is detected (maze_empty); level advancement is step 6.
 
 Run:  .venv/bin/python main.py
 """
@@ -32,7 +33,8 @@ PACMAN_COLOR = 13
 TILE = maze.TILE_SIZE
 
 state = STATE_MENU
-pacman = entities.Pacman()
+game = entities.Game()
+HIGH_SCORE = 0  # session-high, persists across rounds (menu ↔ play)
 
 KEY_DIRS = {
     pyxel.KEY_LEFT: "left",
@@ -51,9 +53,9 @@ def draw_maze():
             y = OY + row * maze.TILE_SIZE
             if ch == "#":
                 pyxel.rect(x, y, maze.TILE_SIZE, maze.TILE_SIZE, WALL_COLOR)
-            elif ch == ".":
+            elif ch == "." and (col, row) in game.pellets:
                 pyxel.rect(x + 1, y + 1, 2, 2, PELLET_COLOR)
-            elif ch == "o":
+            elif ch == "o" and (col, row) in game.pellets:
                 pyxel.rect(x, y + 1, 4, 2, PELLET_COLOR)
             elif ch == "-":
                 pyxel.rect(x, y + 1, maze.TILE_SIZE, 2, DOOR_COLOR)
@@ -66,15 +68,27 @@ def draw_menu():
     # blinking hint (1 Hz at 60 fps)
     if (pyxel.frame_count // 30) % 2 == 0:
         pyxel.text(36, 84, "PRESS ENTER", TITLE_COLOR)
-    pyxel.text(52, 120, "STEP 1 - STATIC MAZE", 7)
+    pyxel.text(52, 120, "STEP 3 - PELLETS + SCORE", 7)
+
+
+def draw_hud():
+    """SCORE (left) and HIGH SCORE (right), above the maze.
+
+    Pyxel's font is 8x8, two rows: labels at y=2, values at y=10
+    (maze starts at OY=20).
+    """
+    pyxel.text(12, 2, "SCORE", TITLE_COLOR)
+    pyxel.text(12, 10, "%04d" % game.score, TITLE_COLOR)
+    pyxel.text(80, 2, "HIGH SCORE", TITLE_COLOR)
+    pyxel.text(80, 10, "%04d" % HIGH_SCORE, TITLE_COLOR)
 
 
 def update():
     """Input handling (called once per frame by pyxel.run)."""
-    global state, pacman
+    global state, game, HIGH_SCORE
     if state == STATE_MENU:
         if pyxel.btnp(pyxel.KEY_RETURN):
-            pacman = entities.Pacman()
+            game = entities.Game()
             state = STATE_PLAY
     elif state == STATE_PLAY:
         if pyxel.btnp(pyxel.KEY_ESCAPE):
@@ -84,7 +98,9 @@ def update():
             if pyxel.btn(key):
                 desired = name
                 break
-        pacman.update(desired)
+        game.update(desired)
+        if game.score > HIGH_SCORE:
+            HIGH_SCORE = game.score
 
 
 def draw():
@@ -93,9 +109,11 @@ def draw():
     if state == STATE_MENU:
         draw_menu()
     else:
+        draw_hud()
         draw_maze()
         # pacman: 4x4 yellow square at its maze-pixel position
-        pyxel.rect(OX + pacman.x, OY + pacman.y, TILE, TILE, PACMAN_COLOR)
+        p = game.pacman
+        pyxel.rect(OX + p.x, OY + p.y, TILE, TILE, PACMAN_COLOR)
 
 
 def main():
