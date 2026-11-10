@@ -19,11 +19,13 @@ OY = 20
 STATE_MENU = 0
 STATE_PLAY = 1
 
-WALL_COLOR = 0x2159ff
-PELLET_COLOR = 0xffb8ae
-DOOR_COLOR = 0xffb8ae
-TITLE_COLOR = 0xffffff
-ACCENT_COLOR = 0xffd800
+# Pyxel colors are 16-color palette indices (0..15), not RGB hex:
+# 3=blue, 9=orange, 13=yellow, 15=white, 7=dark gray
+WALL_COLOR = 3
+PELLET_COLOR = 9
+DOOR_COLOR = 9
+TITLE_COLOR = 15
+ACCENT_COLOR = 13
 
 state = STATE_MENU
 
@@ -50,25 +52,25 @@ def draw_menu():
     pyxel.text(52, 44, "PAC-MAN", TITLE_COLOR)
     pyxel.text(32, 60, "RETRO ARCADE", ACCENT_COLOR)
     # blinking hint (1 Hz at 60 fps)
-    if (pyxel.frame_count() // 30) % 2 == 0:
+    if (pyxel.frame_count // 30) % 2 == 0:
         pyxel.text(36, 84, "PRESS ENTER", TITLE_COLOR)
-    pyxel.text(52, 120, "STEP 1 - STATIC MAZE", 0x888888)
+    pyxel.text(52, 120, "STEP 1 - STATIC MAZE", 7)
 
 
-def frame_event(frame):
-    """Input handling (called once per frame by pyxel)."""
+def update():
+    """Input handling (called once per frame by pyxel.run)."""
     global state
     if state == STATE_MENU:
-        if pyxel.keyp(pyxel.KEY_RETURN):
+        if pyxel.btnp(pyxel.KEY_RETURN):
             state = STATE_PLAY
     elif state == STATE_PLAY:
-        if pyxel.keyp(pyxel.KEY_ESCAPE):
+        if pyxel.btnp(pyxel.KEY_ESCAPE):
             state = STATE_MENU
 
 
-def draw_event():
-    """Rendering (called once per frame by pyxel)."""
-    pyxel.clear(0)
+def draw():
+    """Rendering (called once per frame by pyxel.run)."""
+    pyxel.cls(0)
     if state == STATE_MENU:
         draw_menu()
     else:
@@ -76,11 +78,8 @@ def draw_event():
 
 
 def main():
-    pyxel.init(width=SCREEN_W, height=SCREEN_H, caption="Pac-Man (Pyxel)")
-    pyxel.frame_event(frame_event)
-    pyxel.update(None)
-    pyxel.draw(draw_event)
-    pyxel.run()
+    pyxel.init(SCREEN_W, SCREEN_H, title="Pac-Man (Pyxel)")
+    pyxel.run(update, draw)
 
 
 if __name__ == "__main__":

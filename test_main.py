@@ -1,8 +1,9 @@
 """Headless tests for main.py using a stub pyxel module (no OpenGL needed).
 
-The real pyxel requires a GL context (a window), unavailable on this
-headless machine. The stub records drawing calls so we can assert what
-the render layer would actually draw.
+The stub mirrors the pyxel 3.0 API used by main.py: pyxel.init,
+pyxel.run(update, draw), pyxel.cls, pyxel.rect, pyxel.text, pyxel.btnp,
+pyxel.KEY_*, pyxel.frame_count. It records draw calls and lets tests
+simulate button presses.
 """
 import sys
 import types
@@ -15,9 +16,8 @@ def _make_stub():
     stub.calls = []
     stub.KEY_RETURN = 28
     stub.KEY_ESCAPE = 53
-    stub.KEY_PRESSED = 1
-    stub.KEY_RELEASED = 2
-    stub.keys = {}
+    stub.frame_count = 0
+    stub._pressed = set()
 
     def init(*a, **k):
         pass
@@ -25,20 +25,11 @@ def _make_stub():
     def quit():
         pass
 
-    def run():
+    def run(update, draw):
         pass
 
-    def update(cb):
-        pass
-
-    def frame_event(cb):
-        pass
-
-    def draw(cb):
-        pass
-
-    def clear(color=0):
-        stub.calls.append(("clear", color))
+    def cls(color=0):
+        stub.calls.append(("cls", color))
 
     def rect(x, y, w, h, color):
         stub.calls.append(("rect", x, y, w, h, color))
@@ -46,14 +37,12 @@ def _make_stub():
     def text(x, y, s, color):
         stub.calls.append(("text", x, y, s, color))
 
-    def frame_count():
-        return 0
+    def btnp(key, hold=0, repeat=0):
+        was_pressed = key in stub._pressed
+        stub._pressed.discard(key)
+        return was_pressed
 
-    def keyp(key):
-        return stub.keys.get(key, 0) == stub.KEY_PRESSED
-
-    for name in ("init", "quit", "run", "update", "frame_event", "draw",
-                 "clear", "rect", "text", "frame_count", "keyp"):
+    for name in ("init", "quit", "run", "cls", "rect", "text", "btnp"):
         setattr(stub, name, locals()[name])
     return stub
 
@@ -64,9 +53,9 @@ sys.modules["pyxel"] = _make_stub()
 import main  # noqa: E402
 
 
-def _reset():
+def _reset(pressed=()):
     main.pyxel.calls.clear()
-    main.pyxel.keys.clear()
+    main.pyxel._pressed = set(pressed)
 
 
 def test_maze_render_draws_every_tile():
@@ -87,6 +76,7 @@ def test_maze_render_draws_every_tile():
 def test_menu_draws_title():
     _reset()
     main.state = main.STATE_MENU
+    main.pyxel.frame_count = 0
     main.draw_menu()
     texts = [c[3] for c in main.pyxel.calls if c[0] == "text"]
     assert "PAC-MAN" in texts
@@ -94,25 +84,23 @@ def test_menu_draws_title():
 
 
 def test_enter_switches_menu_to_play():
-    _reset()
+    _reset(pressed=[main.pyxel.KEY_RETURN])
     main.state = main.STATE_MENU
-    main.pyxel.keys[main.pyxel.KEY_RETURN] = main.pyxel.KEY_PRESSED
-    main.frame_event(0)
+    main.update()
     assert main.state == main.STATE_PLAY
 
 
 def test_escape_switches_play_to_menu():
-    _reset()
+    _reset(pressed=[main.pyxel.KEY_ESCAPE])
     main.state = main.STATE_PLAY
-    main.pyxel.keys[main.pyxel.KEY_ESCAPE] = main.pyxel.KEY_PRESSED
-    main.frame_event(0)
+    main.update()
     assert main.state == main.STATE_MENU
 
 
 def test_play_draws_maze_not_menu():
     _reset()
     main.state = main.STATE_PLAY
-    main.draw_event()
+    main.draw()
     assert any(c[0] == "rect" for c in main.pyxel.calls)
     assert not any(c[0] == "text" and c[3] == "PAC-MAN"
                    for c in main.pyxel.calls)
