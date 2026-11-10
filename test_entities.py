@@ -166,3 +166,129 @@ def test_maze_empty_condition():
     assert g.maze_empty() is False
     g.pellets.clear()
     assert g.maze_empty() is True
+
+
+# --- step 4: ghost house, release sequence, tile-based AI ---------------
+
+def gh(g, kind):
+    return next(x for x in g.ghosts if x.kind == kind)
+
+
+def test_ghosts_start_in_the_house():
+    g = entities.Game()
+    assert [x.kind for x in g.ghosts] == list(entities.GHOST_KINDS)
+    for i, x in enumerate(g.ghosts):
+        assert x.state == entities.IN_HOUSE
+        assert x.release_frame == entities.Game.RELEASE_STAGGER_FRAMES[i]
+        assert x.x == entities.HOUSE_X
+        assert x.y // entities.TILE == 13  # interior row of the house
+
+
+def test_release_sequence_is_staggered():
+    g = entities.Game()
+    g.update()
+    assert gh(g, entities.BLINKY).state == entities.LEAVING
+    for k in (entities.INKY, entities.PINKY, entities.CLYDE):
+        assert gh(g, k).state == entities.IN_HOUSE
+    run_game(g, 11)   # frame 12
+    assert gh(g, entities.BLINKY).state == entities.OUTSIDE
+    run_game(g, 168)  # frame 180
+    assert gh(g, entities.INKY).state == entities.LEAVING
+    assert gh(g, entities.CLYDE).state == entities.IN_HOUSE
+    run_game(g, 12)   # frame 192
+    assert gh(g, entities.INKY).state == entities.OUTSIDE
+    run_game(g, 168)  # frame 360
+    assert gh(g, entities.PINKY).state == entities.LEAVING
+    run_game(g, 12)   # frame 372
+    assert gh(g, entities.PINKY).state == entities.OUTSIDE
+    assert gh(g, entities.CLYDE).state == entities.IN_HOUSE
+    run_game(g, 168)  # frame 540
+    assert gh(g, entities.CLYDE).state == entities.LEAVING
+    run_game(g, 12)   # frame 552
+    assert gh(g, entities.CLYDE).state == entities.OUTSIDE
+
+
+def run_game(g, frames):
+    for _ in range(frames):
+        g.update()
+
+
+def test_ghosts_never_enter_walls():
+    g = entities.Game()
+    for _ in range(600):
+        g.update()
+        for x in g.ghosts:
+            if x.state == entities.OUTSIDE:
+                assert maze.is_walkable(*x.tile())
+
+
+def _corner_ghost(kind, x, y, d):
+    g = entities.Ghost(kind, x, y)
+    g.state = entities.OUTSIDE
+    g.dir = d
+    return g
+
+
+def test_edge_choice_minimizes_distance_to_target():
+    g = G(1, 10)  # pacman tile (1,10)
+    x = _corner_ghost(entities.BLINKY, 48, 40, entities.UP)
+    # LEFT -> tile (11,10), dist 10; UP/RIGHT -> dist 12 each
+    assert x._choose_edge(g) == entities.LEFT
+
+
+def test_edge_tie_breaks_by_priority_up_first():
+    g = G(11, 9)  # pacman tile (11,9)
+    x = _corner_ghost(entities.BLINKY, 48, 40, entities.UP)
+    # UP -> (12,9) dist 1, LEFT -> (11,10) dist 1: up wins the tie
+    assert x._choose_edge(g) == entities.UP
+
+
+def test_ghost_never_reverses():
+    g = G(15, 11)  # pacman tile (15,11)
+    x = _corner_ghost(entities.BLINKY, 52, 44, entities.LEFT)
+    # RIGHT (dist 1) is the reverse -> excluded; DOWN is the door;
+    # UP -> (13,10) and LEFT -> (12,11) both dist 3: up wins
+    assert x._choose_edge(g) == entities.UP
+
+
+def test_pinky_targets_four_tiles_ahead_of_pacman():
+    g = G(1, 11)  # pacman tile (1,11)
+    g.pacman.dir = entities.RIGHT
+    assert gh(g, entities.PINKY)._target_tile(g) == (5, 11)
+
+
+def test_pinky_targets_pacman_tile_without_a_direction():
+    g = G(1, 11)
+    assert gh(g, entities.PINKY)._target_tile(g) == (1, 11)
+
+
+def test_blinky_targets_pacman_tile():
+    g = G(4, 4)
+    assert gh(g, entities.BLINKY)._target_tile(g) == (4, 4)
+
+
+def test_inky_target_is_double_pacman_minus_blinky():
+    g = G(1, 11)  # fresh game: blinky at px (54,52) -> tile (13,13)
+    assert gh(g, entities.BLINKY).tile() == (13, 13)
+    # 2*(1,11) - (13,13) = (-11, 9)
+    assert gh(g, entities.INKY)._target_tile(g) == (-11, 9)
+
+
+def test_clyde_chases_when_far():
+    g = G(1, 11)  # clyde at tile (13,13): manhattan 14 > 8
+    assert gh(g, entities.CLYDE)._target_tile(g) == (1, 11)
+
+
+def test_clyde_flees_to_the_far_corner_when_near():
+    g = G(1, 11)
+    c = gh(g, entities.CLYDE)
+    c.x, c.y = 7 * entities.TILE, 10 * entities.TILE  # tile (7,10), dist 7
+    assert c._target_tile(g) == (26, 24)
+
+
+def test_pacman_cannot_enter_the_ghost_house_door():
+    p = entities.Pacman(entities.START_X, entities.START_Y)
+    for _ in range(20):
+        p.update("down")
+    assert p.y == entities.START_Y + 3  # stopped at the bottom of row 11
+    assert p.y // entities.TILE == 11

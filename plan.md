@@ -84,24 +84,40 @@ power-peletki, 3 życia, rosnąca trudność.
       (120 klatek; `pyxel.quit()` wychodzi bez flush stdout — dlatego
       print z flush przed quit)
 
-### 4. Dom duchów + wypuszczanie + AI
+### 4. Dom duchów + wypuszczanie + AI — DONE ✅
 
-- [ ] `Ghost` w `entities.py`: pozycja, kierunek, prędkość, typ
-      (Blinky/Pinky/Inky/Clyde), stan (w domie / na zewnątrz /
-      ucieka)
-- [ ] Dom duchów: 4 duchy startują w domu (rzędy 11–13, kolumny 12–15),
-      drzwi (13,12)/(14,12); sekwencja wypuszczania (co X sekund
-      jeden duch)
-- [ ] AI na kafelkach (decyzje na skrzyżowaniu, nie na pikselach):
+- [x] `Ghost` w `entities.py`: pozycja, kierunek, prędkość, typ
+      (Blinky/Pinky/Inky/Clyde), stany `in_house`/`leaving`/`outside`
+      (stan `fleeing` przyjdzie w kroku 5 z power-peletkami)
+- [x] Dom duchów: 4 duchy startują w domu (rzędy 11–13, kolumny 12–15),
+      drzwi (13,12)/(14,12); sekwencja wypuszczania co 3 s (180 klatek):
+      Blinky 0, Inky 180, Pinky 360, Clyde 540 — kolejność jak w
+      arcade. W domu duch bobuje się 1 px (rzędy 52–53)
+- [x] Wyjście z domu: duch wznosi się przez drzwi do otwartego
+      rzędu 11, potem przesuwa się 2 px w lewo na linię siatki
+      (52,44) — środek drzwi (x=54) jest poza siatką 4 px, bez
+      tego ruchu AI nie mogłaby wybrać krawędzi
+- [x] AI na kafelkach (decyzje na skrzyżowaniu, nie na pikselach):
       - Blinky: goni pacmana (target = kafelek pacmana)
       - Pinky: celuje 4 kafeleki przed pacmanem (wektor)
-      - Inky: 2×(2×pacman − blinky) uproszczony
-      - Clyde: goni pacmana, jeśli daleko (>8), inaczej ucieka
+      - Inky: 2×pacman − blinky (uproszczony)
+      - Clyde: goni pacmana, jeśli daleko (>8 kafelków), inaczej
+        ucieka do najdalszego od pacmana narożnika
     - wybór krawędzi skrzyżowania minimalizującej odległość do
-      celu (bez cofania w krawędź, z której duch wszedł)
-- [ ] Kolory duchów (B=niebieski, P=pink, I=cyjan, C=bordo)
-- [ ] Testy: duch nie wchodzi w ścianę, wybór krawędzi = min odległość,
-      sekwencja wypuszczania, cele typów (Pinky = pacman + 4×dir)
+      celu (bez cofania w krawędź, z której duch wszedł; remis:
+      up > left > right > down, jak w arcade)
+- [x] Drzwi domu zamknięte dla pacmana (`_walkable` odrzuca `-`);
+      duchy nie wchodzą w drzwi, gdy są na zewnątrz
+- [x] Kolory duchów (B=niebieski 11, P=pink 3, I=cyjan 10, C=bordo 4);
+      render 4×4 kwadrat na pozycji duchów (`draw_ghosts`)
+- [x] Testy: 13 nowych w `test_entities.py` (start w domu, sekwencja
+      wypuszczania, zero wejść w ściany przez 600 klatek, wybór
+      krawędzi = min odległość, remis, bez zawracania, cele wszystkich
+      4 typów, drzwi zamknięte dla pacmana) + 2 nowych w
+      `test_main.py` (render 4 duchów w kolorach, `update()` prowadzi
+      duchy)
+- [x] Symulacja 600 klatek: 0 naruszeń ścian, przejścia stanów
+      12/180/192/360/372/540/552
 
 ### 5. Power-peletki + frightened + jedzenie duchów
 

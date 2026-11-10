@@ -157,6 +157,33 @@ def test_hud_shows_score_after_eating_pellets():
     assert main.HIGH_SCORE == 20  # session high follows the round
 
 
+def test_play_draws_the_four_ghosts():
+    _reset(game=main.entities.Game())
+    main.state = main.STATE_PLAY
+    main.draw()
+    colors = {
+        main.entities.BLINKY: main.BLINKY_COLOR,
+        main.entities.PINKY: main.PINKY_COLOR,
+        main.entities.INKY: main.INKY_COLOR,
+        main.entities.CLYDE: main.CLYDE_COLOR,
+    }
+    rects = [c for c in main.pyxel.calls if c[0] == "rect"]
+    for g in main.game.ghosts:
+        assert ("rect", main.OX + g.x, main.OY + g.y, 4, 4,
+                colors[g.kind]) in rects
+
+
+def test_update_advances_the_ghosts():
+    # after 12 frames Blinky (released at frame 0) is outside
+    _reset(game=main.entities.Game())
+    main.state = main.STATE_PLAY
+    for _ in range(12):
+        main.update()
+    blinky = next(g for g in main.game.ghosts
+                  if g.kind == main.entities.BLINKY)
+    assert blinky.state == main.entities.OUTSIDE
+
+
 def test_draw_maze_skips_spawn_and_eaten_pellets():
     _reset(held=[main.pyxel.KEY_RIGHT], game=main.entities.Game())
     main.state = main.STATE_PLAY

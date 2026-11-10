@@ -1,8 +1,9 @@
 """Pac-Man in Pyxel.
 
-Step 3: pellets + score + HUD. Pacman eats pellets (10 pts each),
-the HUD shows SCORE and the session-high HIGH SCORE. Emptying the
-maze is detected (maze_empty); level advancement is step 6.
+Step 4: ghost house + release sequence + tile-based AI. Four
+ghosts (Blinky, Inky, Pinky, Clyde) start in the house, leave one
+every 3 s, then roam the maze chasing with per-type targets.
+Frightened/fleeing behavior arrives with step 5's power pellets.
 
 Run:  .venv/bin/python main.py
 """
@@ -29,6 +30,11 @@ DOOR_COLOR = 9
 TITLE_COLOR = 15
 ACCENT_COLOR = 13
 PACMAN_COLOR = 13
+# Ghost colors (plan: B=niebieski, P=pink, I=cyjan, C=bordo)
+BLINKY_COLOR = 11  # light blue
+PINKY_COLOR = 3    # magenta/pink
+INKY_COLOR = 10    # teal/cyan
+CLYDE_COLOR = 4    # red/maroon
 
 TILE = maze.TILE_SIZE
 
@@ -68,7 +74,19 @@ def draw_menu():
     # blinking hint (1 Hz at 60 fps)
     if (pyxel.frame_count // 30) % 2 == 0:
         pyxel.text(36, 84, "PRESS ENTER", TITLE_COLOR)
-    pyxel.text(52, 120, "STEP 3 - PELLETS + SCORE", 7)
+    pyxel.text(52, 120, "STEP 4 - GHOSTS + AI", 7)
+
+
+def draw_ghosts():
+    """Each ghost: 4x4 square at its maze-pixel position."""
+    colors = {
+        entities.BLINKY: BLINKY_COLOR,
+        entities.PINKY: PINKY_COLOR,
+        entities.INKY: INKY_COLOR,
+        entities.CLYDE: CLYDE_COLOR,
+    }
+    for g in game.ghosts:
+        pyxel.rect(OX + g.x, OY + g.y, TILE, TILE, colors[g.kind])
 
 
 def draw_hud():
@@ -114,6 +132,7 @@ def draw():
         # pacman: 4x4 yellow square at its maze-pixel position
         p = game.pacman
         pyxel.rect(OX + p.x, OY + p.y, TILE, TILE, PACMAN_COLOR)
+        draw_ghosts()
 
 
 def main():
