@@ -7,6 +7,7 @@ Run:  .venv/bin/python main.py
 """
 import pyxel
 
+import entities
 import maze
 
 SCREEN_W = 160
@@ -26,8 +27,19 @@ PELLET_COLOR = 9
 DOOR_COLOR = 9
 TITLE_COLOR = 15
 ACCENT_COLOR = 13
+PACMAN_COLOR = 13
+
+TILE = maze.TILE_SIZE
 
 state = STATE_MENU
+pacman = entities.Pacman()
+
+KEY_DIRS = {
+    pyxel.KEY_LEFT: "left",
+    pyxel.KEY_RIGHT: "right",
+    pyxel.KEY_UP: "up",
+    pyxel.KEY_DOWN: "down",
+}
 
 
 def draw_maze():
@@ -59,13 +71,20 @@ def draw_menu():
 
 def update():
     """Input handling (called once per frame by pyxel.run)."""
-    global state
+    global state, pacman
     if state == STATE_MENU:
         if pyxel.btnp(pyxel.KEY_RETURN):
+            pacman = entities.Pacman()
             state = STATE_PLAY
     elif state == STATE_PLAY:
         if pyxel.btnp(pyxel.KEY_ESCAPE):
             state = STATE_MENU
+        desired = None
+        for key, name in KEY_DIRS.items():
+            if pyxel.btn(key):
+                desired = name
+                break
+        pacman.update(desired)
 
 
 def draw():
@@ -75,6 +94,8 @@ def draw():
         draw_menu()
     else:
         draw_maze()
+        # pacman: 4x4 yellow square at its maze-pixel position
+        pyxel.rect(OX + pacman.x, OY + pacman.y, TILE, TILE, PACMAN_COLOR)
 
 
 def main():

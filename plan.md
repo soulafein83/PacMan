@@ -40,26 +40,26 @@ power-peletki, 3 życia, rosnąca trudność.
 - [x] Smoke test headless: 60 klatek na prawdziwym pyxel 3.0.1
 - [x] Repo GitHub: `soulafein83/PacMan` (public)
 
-### 2. Ruch pacmana
+### 2. Ruch pacmana — DONE ✅
 
-- [ ] Klasa `Pacman` w `entities.py`: pozycja pikselowa + pozycja
-      logiczna (kolumna/rząd, frakcja między kafelkami), prędkość
-      stała px/frame (np. 1.0), kierunek
-- [ ] Ruch po siatce: porusza się do skrzyżowania, tam decyduje o
-      zmianie kierunku; interpolacja płynna między kafelkami
-- [ ] Bufor kierunku: graczy wciśnięcie strzałki jest pamiętane
-      (`queued_dir`) i stosowane przy najbliższym skrzyżowaniu
-      (klasyczne zachowanie Pac-Mana)
-- [ ] Zmiana kierunku w lewo/prawo dozwolona również na prostej
-      (nie tylko na skrzyżowaniu) — zgodnie z oryginałem
-- [ ] Tunel w rzędzie 18: otwarcie krawędzi + wrap-around (wyjście
-      z jednej strony → wejście z drugiej), z małym karnym zwolnieniem
-      (opcjonalnie)
-- [ ] Render pacmana: 4×4 px (prosty kwadrat/obrót kierunku na później),
-      kierunek wizualny
-- [ ] Testy: ruch w prawo/do dołu, bufor kierunku na skrzyżowaniu,
-      obrót w lewo na prostej, tunel (pozycja po wrapie), brak ruchu
-      przy ścianie
+- [x] Klasa `Pacman` w `entities.py`: pozycja pikselowa (4-px siatka,
+      1 px/frame), kierunek, pozycja startowa (52, 44)
+- [x] Ruch po siatce: płynny 1 px/frame, decyzje na skrzyżowaniach
+      (oba współrzędne % 4 == 0)
+- [x] Bufor kierunku: wciśnięcie strzałki jest pamiętane (`queued`) i
+      stosowane przy najbliższym skrzyżowaniu (klasyczne zachowanie)
+- [x] Obrót w lewo/prawo dozwolony również na prostej (oś prostopadła);
+      zawracanie tylko na skrzyżowaniu
+- [x] Tunel w rzędzie 18: otwarte krawędzie + wrap-around (bez karnego
+      zwolnienia — pozostawione opcjonalnie)
+- [x] Render pacmana: 4×4 px kwadrat (kolor 13), kierunek wizualny
+      na później (krok 8)
+- [x] Testy: 10 testów w `test_entities.py` (ruch, bufor, obrót,
+      zawracanie, tunel w obie strony, brak wrapu poza tunelem, ściany)
+      + 2 testy warstwy pyxel w `test_main.py` (render + ruch przy
+      trzymanym strzałce)
+- [x] Poprawka mapy: power-peletki spójne (4× `o`), 8× `O` → `.`
+      (poprzednio `O` było nieprzejściwalne — ściana w rogach)
 
 ### 3. Peletki + score + HUD
 

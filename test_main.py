@@ -16,8 +16,13 @@ def _make_stub():
     stub.calls = []
     stub.KEY_RETURN = 28
     stub.KEY_ESCAPE = 53
+    stub.KEY_LEFT = 100
+    stub.KEY_RIGHT = 101
+    stub.KEY_UP = 102
+    stub.KEY_DOWN = 103
     stub.frame_count = 0
     stub._pressed = set()
+    stub._held = set()
 
     def init(*a, **k):
         pass
@@ -42,7 +47,10 @@ def _make_stub():
         stub._pressed.discard(key)
         return was_pressed
 
-    for name in ("init", "quit", "run", "cls", "rect", "text", "btnp"):
+    def btn(key):
+        return key in stub._held
+
+    for name in ("init", "quit", "run", "cls", "rect", "text", "btnp", "btn"):
         setattr(stub, name, locals()[name])
     return stub
 
@@ -53,9 +61,10 @@ sys.modules["pyxel"] = _make_stub()
 import main  # noqa: E402
 
 
-def _reset(pressed=()):
+def _reset(pressed=(), held=()):
     main.pyxel.calls.clear()
     main.pyxel._pressed = set(pressed)
+    main.pyxel._held = set(held)
 
 
 def test_maze_render_draws_every_tile():
@@ -97,10 +106,23 @@ def test_escape_switches_play_to_menu():
     assert main.state == main.STATE_MENU
 
 
-def test_play_draws_maze_not_menu():
+def test_play_draws_maze_and_pacman():
     _reset()
     main.state = main.STATE_PLAY
     main.draw()
     assert any(c[0] == "rect" for c in main.pyxel.calls)
     assert not any(c[0] == "text" and c[3] == "PAC-MAN"
                    for c in main.pyxel.calls)
+    # pacman square: 4x4 at its maze position (offset by OX/OY)
+    p = main.pacman
+    assert ("rect", main.OX + p.x, main.OY + p.y, 4, 4, 13) in main.pyxel.calls
+
+
+def test_holding_an_arrow_moves_pacman_in_play():
+    _reset(held=[main.pyxel.KEY_RIGHT])
+    main.state = main.STATE_PLAY
+    main.pacman = main.entities.Pacman()
+    for _ in range(5):
+        main.update()
+    assert main.pacman.x == main.entities.START_X + 5
+    assert main.pacman.y == main.entities.START_Y

@@ -29,7 +29,7 @@ uruchamiaj testy:
 ## Status wdrożenia (kroki z planu)
 
 - [x] 1. Szkielet: init pyxel, statyczny labirynt, ekran tytułu
-- [ ] 2. Ruch pacmana (siatka + interpolacja, bufor kierunku, tunel)
+- [x] 2. Ruch pacmana (siatka + interpolacja, bufor kierunku, tunel)
 - [ ] 3. Peletki + score + HUD
 - [ ] 4. Dom duchów + wypuszczanie + uproszczona AI
 - [ ] 5. Power-peletki, frightened, jedzenie duchów
